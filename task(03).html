@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            margin: 0;
+            padding-bottom: 20px;
+            font-size: 2.5em;
+            color: #333;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #f9f9f9;
+            border: 2px solid #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .cell:hover {
+            background-color: #eee;
+            transform: scale(1.05);
+        }
+
+        #restart, #play-again {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        #restart:hover, #play-again:hover {
+            background-color: #45a049;
+        }
+
+        #winning-message {
+            display: none;
+            margin-top: 20px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        #winning-message.show {
+            display: block;
+        }
+
+        #winning-text {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            animation: bounce 1s infinite;
+            color: #333;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-30px);
+            }
+            60% {
+                transform: translateY(-15px);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tic Tac Toe</h1>
+        <div class="board">
+            <div class="cell" data-cell-index="0"></div>
+            <div class="cell" data-cell-index="1"></div>
+            <div class="cell" data-cell-index="2"></div>
+            <div class="cell" data-cell-index="3"></div>
+            <div class="cell" data-cell-index="4"></div>
+            <div class="cell" data-cell-index="5"></div>
+            <div class="cell" data-cell-index="6"></div>
+            <div class="cell" data-cell-index="7"></div>
+            <div class="cell" data-cell-index="8"></div>
+        </div>
+        <button id="restart">Restart</button>
+        <audio id="win-sound">
+            <source src="win-sound.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <div id="winning-message">
+            <div id="winning-text"></div>
+            <button id="play-again">Play Again</button>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cells = document.querySelectorAll('.cell');
+            const restartButton = document.getElementById('restart');
+            const winningMessage = document.getElementById('winning-message');
+            const winningText = document.getElementById('winning-text');
+            const playAgainButton = document.getElementById('play-again');
+            const winSound = document.getElementById('win-sound');
+
+            let currentPlayer = 'X';
+            let gameActive = true;
+
+            const handleCellClick = (e) => {
+                const cell = e.target;
+                const index = cell.dataset.cellIndex;
+
+                if (cell.textContent !== '' || !gameActive) return;
+
+                cell.textContent = currentPlayer;
+                cell.classList.add(currentPlayer);
+
+                if (checkWin()) {
+                    endGame(true);
+                } else if (checkDraw()) {
+                    endGame(false);
+                } else {
+                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                }
+            };
+
+            const checkWin = () => {
+                const winningCombinations = [
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                    [0, 4, 8], [2, 4, 6]
+                ];
+
+                return winningCombinations.some(combination => {
+                    return combination.every(index => {
+                        return cells[index].classList.contains(currentPlayer);
+                    });
+                });
+            };
+
+            const checkDraw = () => {
+                return [...cells].every(cell => {
+                    return cell.textContent !== '';
+                });
+            };
+
+            const endGame = (win) => {
+                gameActive = false;
+                if (win) {
+                    winningText.textContent = `${currentPlayer} wins! 🎉🎉🎉`;
+                    winningText.style.color = currentPlayer === 'X' ? 'blue' : 'red';
+                    winningMessage.classList.add('show');
+                    winSound.play();
+                    highlightWinningCells();
+                } else {
+                    winningText.textContent = `It's a draw! 🤝`;
+                    winningText.style.color = 'gray';
+                    winningMessage.classList.add('show');
+                }
+            };
+
+            const highlightWinningCells = () => {
+                const winningCombinations = [
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                    [0, 4, 8], [2, 4, 6]
+                ];
+
+                winningCombinations.forEach(combination => {
+                    if (combination.every(index => cells[index].classList.contains(currentPlayer))) {
+                        combination.forEach(index => {
+                            cells[index].style.backgroundColor = 'lightgreen';
+                        });
+                    }
+                });
+            };
+
+            const startGame = () => {
+                cells.forEach(cell => {
+                    cell.textContent = '';
+                    cell.classList.remove('X', 'O');
+                    cell.style.backgroundColor = '#f9f9f9';
+                    cell.addEventListener('click', handleCellClick, { once: true });
+                });
+                winningMessage.classList.remove('show');
+                currentPlayer = 'X';
+                gameActive = true;
+            };
+
+            restartButton.addEventListener('click', startGame);
+            playAgainButton.addEventListener('click', startGame);
+
+            startGame();
+        });
+    </script>
+</body>
+</html>
